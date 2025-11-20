@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "ticket-booking-client": "file:../.."
+  }
+}
