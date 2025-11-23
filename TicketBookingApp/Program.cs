@@ -31,6 +31,37 @@ builder.Services.AddControllers()
 
 var app = builder.Build();
 
+// Ensure database migrations are applied at startup so new columns (e.g. PhoneNumber) exist
+using (var scope = app.Services.CreateScope())
+{
+    try
+    {
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        // Apply any pending migrations
+        db.Database.Migrate();
+
+        // As a safety fallback: if the PhoneNumber column doesn't exist, add it
+        var conn = db.Database.GetDbConnection();
+        conn.Open();
+        using (var cmd = conn.CreateCommand())
+        {
+            cmd.CommandText = @"SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'Bookings' AND COLUMN_NAME = 'PhoneNumber'";
+            var exists = (int)cmd.ExecuteScalar() > 0;
+            if (!exists)
+            {
+                cmd.CommandText = @"ALTER TABLE [Bookings] ADD [PhoneNumber] nvarchar(20) NULL";
+                cmd.ExecuteNonQuery();
+            }
+        }
+        conn.Close();
+    }
+    catch (Exception ex)
+    {
+        // Log but don't crash the app on startup migration issues
+        Console.WriteLine("Error while applying migrations or updating schema: " + ex.Message);
+    }
+}
+
 // Middleware
 if (app.Environment.IsDevelopment())
 {

@@ -60,10 +60,11 @@ namespace TicketBookingApp.Controllers
             // Header row
             worksheet.Cell(1, 1).Value = "Id";
             worksheet.Cell(1, 2).Value = "Name";
-            worksheet.Cell(1, 3).Value = "NumberOfTickets";
-            worksheet.Cell(1, 4).Value = "TicketType";
-            worksheet.Cell(1, 5).Value = "BookingDate";
-            worksheet.Cell(1, 6).Value = "BookingNumber";
+            worksheet.Cell(1, 3).Value = "PhoneNumber";
+            worksheet.Cell(1, 4).Value = "NumberOfTickets";
+            worksheet.Cell(1, 5).Value = "TicketType";
+            worksheet.Cell(1, 6).Value = "BookingDate";
+            worksheet.Cell(1, 7).Value = "BookingNumber";
 
             // Data rows
             var row = 2;
@@ -71,16 +72,17 @@ namespace TicketBookingApp.Controllers
             {
                 worksheet.Cell(row, 1).Value = b.Id.ToString();
                 worksheet.Cell(row, 2).Value = b.Name;
-                worksheet.Cell(row, 3).Value = b.NumberOfTickets;
-                worksheet.Cell(row, 4).Value = b.TicketType.ToString();
-                worksheet.Cell(row, 5).Value = b.BookingDate;
-                worksheet.Cell(row, 6).Value = b.BookingNumber;
+                worksheet.Cell(row, 3).Value = b.PhoneNumber;
+                worksheet.Cell(row, 4).Value = b.NumberOfTickets;
+                worksheet.Cell(row, 5).Value = b.TicketType.ToString();
+                worksheet.Cell(row, 6).Value = b.BookingDate;
+                worksheet.Cell(row, 7).Value = b.BookingNumber;
                 row++;
             }
 
             // Format
             worksheet.Columns().AdjustToContents();
-            worksheet.Column(5).Style.DateFormat.Format = "yyyy-mm-dd hh:mm:ss";
+            worksheet.Column(6).Style.DateFormat.Format = "yyyy-mm-dd hh:mm:ss";
 
             using var stream = new MemoryStream();
             workbook.SaveAs(stream);
@@ -108,7 +110,8 @@ namespace TicketBookingApp.Controllers
                 NumberOfTickets = dto.NumberOfTickets,
                 TicketType = dto.TicketType,
                 BookingDate = DateTime.Now,
-                BookingNumber = bookingNumber
+                BookingNumber = bookingNumber,
+                PhoneNumber = dto.PhoneNumber
             };
 
             _context.Bookings.Add(booking);

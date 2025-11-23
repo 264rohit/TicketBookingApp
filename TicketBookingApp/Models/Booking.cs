@@ -16,5 +16,9 @@ namespace TicketBookingApp.Models
         [Required]
         [MaxLength(6)]
         public string BookingNumber { get; set; }
+
+        // New phone number field
+        [MaxLength(20)]
+        public string? PhoneNumber { get; set; }
     }
 }

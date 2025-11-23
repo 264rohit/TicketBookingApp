@@ -30,6 +30,7 @@ function App() {
   const [name, setName] = useState('')
   const [tickets, setTickets] = useState(1)
   const [ticketType, setTicketType] = useState('Stag')
+  const [phone, setPhone] = useState('')
   const [bookings, setBookings] = useState([])
   const [searchNumber, setSearchNumber] = useState('')
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' })
@@ -61,11 +62,11 @@ function App() {
     try {
       const res = await fetch(`${apiBase}/api/bookings`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, numberOfTickets: parseInt(tickets), ticketType })
+        body: JSON.stringify({ name, numberOfTickets: parseInt(tickets), ticketType, phoneNumber: phone })
       })
       if (res.ok) {
         const newBooking = await res.json(); setBookings([newBooking, ...bookings]);
-        setName(''); setTickets(1); setTicketType('Stag'); showSnackbar('Ticket booked successfully!')
+        setName(''); setTickets(1); setTicketType('Stag'); setPhone(''); showSnackbar('Ticket booked successfully!')
       } else { const errorText = await res.text(); showSnackbar(`Error: ${errorText}`, 'error') }
     } catch (err) { console.error(err); showSnackbar('Server not reachable', 'error') }
   }
@@ -116,6 +117,7 @@ function App() {
 
         <Box component="form" onSubmit={submit} mb={3}>
           <TextField label="Name" variant="outlined" fullWidth value={name} onChange={(e)=>setName(e.target.value)} sx={{ mb: 2 }} />
+          <TextField label="Phone Number" variant="outlined" fullWidth type="tel" value={phone} onChange={(e)=>setPhone(e.target.value)} sx={{ mb: 2 }} />
           <TextField label="Number of Tickets" variant="outlined" type="number" fullWidth inputProps={{ min: 1 }} value={tickets} onChange={(e)=>setTickets(e.target.value)} sx={{ mb: 2 }} />
           <TextField select label="Ticket Type" fullWidth value={ticketType} onChange={(e)=>setTicketType(e.target.value)} sx={{ mb: 2 }}>
             <MenuItem value="Stag">Stag</MenuItem>
@@ -140,7 +142,7 @@ function App() {
             {bookings.map((b, idx) => (
               <React.Fragment key={b.id || idx}>
                 <ListItem secondaryAction={<IconButton edge="end" color="error" onClick={()=>openDeleteDialog(b.bookingNumber)}><DeleteIcon /></IconButton>}>
-                  <ListItemText primary={`${b.name} (${b.ticketType}) booked ${b.numberOfTickets} ticket(s)`} secondary={`Booking #: ${b.bookingNumber} | ${new Date(b.bookingDate).toLocaleString()}`} />
+                  <ListItemText primary={`${b.name} (${b.ticketType}) booked ${b.numberOfTickets} ticket(s)`} secondary={`Booking #: ${b.bookingNumber} | ${b.phoneNumber ? 'Phone: ' + b.phoneNumber + ' | ' : ''}${new Date(b.bookingDate).toLocaleString()}`} />
                 </ListItem>
                 <Divider />
               </React.Fragment>
