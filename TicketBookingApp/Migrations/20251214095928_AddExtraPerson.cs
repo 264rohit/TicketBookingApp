@@ -5,24 +5,24 @@
 namespace TicketBookingApp.Migrations
 {
     /// <inheritdoc />
-    public partial class AddPhoneNumber : Migration
+    public partial class AddExtraPerson : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.AddColumn<string>(
-                name: "PhoneNumber",
+            migrationBuilder.AddColumn<int>(
+                name: "ExtraPerson",
                 table: "Bookings",
-                type: "nvarchar(20)",
-                maxLength: 20,
-                nullable: true);
+                type: "int",
+                nullable: false,
+                defaultValue: 0);
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropColumn(
-                name: "PhoneNumber",
+                name: "ExtraPerson",
                 table: "Bookings");
         }
     }

@@ -33,8 +33,11 @@ namespace TicketBookingApp.Migrations
 
                     b.Property<string>("BookingNumber")
                         .IsRequired()
-                        .HasMaxLength(6)
-                        .HasColumnType("nvarchar(6)");
+                        .HasMaxLength(12)
+                        .HasColumnType("nvarchar(12)");
+
+                    b.Property<int>("ExtraPerson")
+                        .HasColumnType("int");
 
                     b.Property<string>("Name")
                         .IsRequired()

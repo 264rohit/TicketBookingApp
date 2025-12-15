@@ -2,9 +2,10 @@
 {
     public enum TicketType
     {
-        Stag = 1,
-        Silver = 2,
-        Gold = 3,
-        Platinum = 4
+        StandardStag = 1,
+        PremiumPlatinum = 2,
+        TitaniumTable = 3,
+        TitaniumTable10 = 4,
+        PremiumTitaniumTable = 5
     }
 }

@@ -14,11 +14,13 @@ namespace TicketBookingApp.Models
         public TicketType TicketType { get; set; }  // 👈 New Enum field
 
         [Required]
-        [MaxLength(6)]
+        [MaxLength(12)]
         public string BookingNumber { get; set; }
 
         // New phone number field
         [MaxLength(20)]
         public string? PhoneNumber { get; set; }
+
+        public int ExtraPerson { get; set; } = 0;
     }
 }

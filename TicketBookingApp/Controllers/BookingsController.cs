@@ -58,25 +58,25 @@ namespace TicketBookingApp.Controllers
             var worksheet = workbook.Worksheets.Add("Bookings");
 
             // Header row
-            worksheet.Cell(1, 1).Value = "Id";
-            worksheet.Cell(1, 2).Value = "Name";
-            worksheet.Cell(1, 3).Value = "PhoneNumber";
-            worksheet.Cell(1, 4).Value = "NumberOfTickets";
-            worksheet.Cell(1, 5).Value = "TicketType";
-            worksheet.Cell(1, 6).Value = "BookingDate";
-            worksheet.Cell(1, 7).Value = "BookingNumber";
+            worksheet.Cell(1, 1).Value = "Name";
+            worksheet.Cell(1, 2).Value = "PhoneNumber";
+            worksheet.Cell(1, 3).Value = "NumberOfTickets";
+            worksheet.Cell(1, 4).Value = "TicketType";
+            worksheet.Cell(1, 5).Value = "BookingDate";
+            worksheet.Cell(1, 6).Value = "BookingNumber";
+            worksheet.Cell(1, 7).Value = "ExtraPerson";
 
             // Data rows
             var row = 2;
             foreach (var b in bookings)
             {
-                worksheet.Cell(row, 1).Value = b.Id.ToString();
-                worksheet.Cell(row, 2).Value = b.Name;
-                worksheet.Cell(row, 3).Value = b.PhoneNumber;
-                worksheet.Cell(row, 4).Value = b.NumberOfTickets;
-                worksheet.Cell(row, 5).Value = b.TicketType.ToString();
-                worksheet.Cell(row, 6).Value = b.BookingDate;
-                worksheet.Cell(row, 7).Value = b.BookingNumber;
+                worksheet.Cell(row, 1).Value = b.Name;
+                worksheet.Cell(row, 2).Value = b.PhoneNumber;
+                worksheet.Cell(row, 3).Value = b.NumberOfTickets;
+                worksheet.Cell(row, 4).Value = b.TicketType.ToString();
+                worksheet.Cell(row, 5).Value = b.BookingDate;
+                worksheet.Cell(row, 6).Value = b.BookingNumber;
+                worksheet.Cell(row, 7).Value = b.ExtraPerson;
                 row++;
             }
 
@@ -94,30 +94,83 @@ namespace TicketBookingApp.Controllers
             return File(stream.ToArray(), contentType, fileName);
         }
 
+        private string PrefixFor(TicketType type)
+        {
+            return type switch
+            {
+                TicketType.StandardStag => "SS",
+                TicketType.PremiumPlatinum => "PP",
+                TicketType.TitaniumTable => "5TT",
+                TicketType.TitaniumTable10 => "10TT",
+                TicketType.PremiumTitaniumTable => "10PTT",
+                _ => "XX",
+            };
+        }
+
+        private string GenerateUniqueCode(int digits = 4)
+        {
+            var rng = new Random();
+            var max = (int)Math.Pow(10, digits) - 1;
+            var min = (int)Math.Pow(10, digits - 1);
+            return rng.Next(min, max + 1).ToString().PadLeft(digits, '0');
+        }
+
         [HttpPost]
         public async Task<ActionResult<Booking>> CreateBooking([FromBody] CreateBookingDto dto)
         {
-            string bookingNumber;
-            do
+            if (dto == null)
+                return BadRequest(new { message = "Request body is required" });
+
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            try
             {
-                bookingNumber = new Random().Next(100000, 999999).ToString();
+                string bookingNumber;
+                var attempts = 0;
+
+                do
+                {
+                    var prefix = PrefixFor(dto.TicketType);
+                    bookingNumber = prefix + GenerateUniqueCode(4);
+                    attempts++;
+
+                    // safety: after many attempts fall back to a deterministic short GUID fragment
+                    if (attempts > 10)
+                    {
+                        bookingNumber = PrefixFor(dto.TicketType) + Guid.NewGuid().ToString("N").Substring(0, 4);
+                        break;
+                    }
+                }
+                while (await _context.Bookings.AnyAsync(b => b.BookingNumber == bookingNumber));
+
+                var booking = new Booking
+                {
+                    Name = dto.Name,
+                    NumberOfTickets = dto.NumberOfTickets,
+                    TicketType = dto.TicketType,
+                    BookingDate = DateTime.Now,
+                    BookingNumber = bookingNumber,
+                    PhoneNumber = dto.PhoneNumber,
+                    ExtraPerson = dto.ExtraPerson
+                };
+
+                _context.Bookings.Add(booking);
+                await _context.SaveChangesAsync();
+
+                return CreatedAtAction(nameof(GetById), new { id = booking.Id }, booking);
             }
-            while (await _context.Bookings.AnyAsync(b => b.BookingNumber == bookingNumber));
-
-            var booking = new Booking
+            catch (DbUpdateException dbEx)
             {
-                Name = dto.Name,
-                NumberOfTickets = dto.NumberOfTickets,
-                TicketType = dto.TicketType,
-                BookingDate = DateTime.Now,
-                BookingNumber = bookingNumber,
-                PhoneNumber = dto.PhoneNumber
-            };
-
-            _context.Bookings.Add(booking);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction(nameof(GetById), new { id = booking.Id }, booking);
+                // log the error server-side
+                Console.WriteLine("Database error creating booking: " + dbEx.Message);
+                return StatusCode(500, new { message = "Database error while creating booking." });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error creating booking: " + ex.Message);
+                return StatusCode(500, new { message = "An unexpected error occurred while creating booking." });
+            }
         }
 
         [HttpDelete("by-number/{bookingNumber}")]

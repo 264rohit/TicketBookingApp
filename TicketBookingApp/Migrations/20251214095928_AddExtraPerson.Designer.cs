@@ -12,8 +12,8 @@ using TicketBookingApp.Data;
 namespace TicketBookingApp.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20251123051930_AddPhoneNumber")]
-    partial class AddPhoneNumber
+    [Migration("20251214095928_AddExtraPerson")]
+    partial class AddExtraPerson
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -36,8 +36,11 @@ namespace TicketBookingApp.Migrations
 
                     b.Property<string>("BookingNumber")
                         .IsRequired()
-                        .HasMaxLength(6)
-                        .HasColumnType("nvarchar(6)");
+                        .HasMaxLength(12)
+                        .HasColumnType("nvarchar(12)");
+
+                    b.Property<int>("ExtraPerson")
+                        .HasColumnType("int");
 
                     b.Property<string>("Name")
                         .IsRequired()

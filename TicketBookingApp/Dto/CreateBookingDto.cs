@@ -8,5 +8,6 @@ namespace TicketBookingApp.Dto
         public int NumberOfTickets { get; set; }
         public TicketType TicketType { get; set; }
         public string? PhoneNumber { get; set; }
+        public int ExtraPerson { get; set; } = 0;
     }
 }

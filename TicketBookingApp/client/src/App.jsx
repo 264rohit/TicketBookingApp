@@ -29,7 +29,8 @@ import DownloadIcon from '@mui/icons-material/Download'
 function App() {
   const [name, setName] = useState('')
   const [tickets, setTickets] = useState(1)
-  const [ticketType, setTicketType] = useState('Stag')
+    const [ticketType, setTicketType] = useState('standardStag')
+    const [extraPerson, setExtraPerson] = useState(0)
   const [phone, setPhone] = useState('')
   const [bookings, setBookings] = useState([])
   const [searchNumber, setSearchNumber] = useState('')
@@ -39,6 +40,18 @@ function App() {
   const apiBase = import.meta.env.VITE_API_BASE || 'http://localhost:5021'
 
   useEffect(() => { fetchBookings() }, [])
+
+  function ticketTypeLabel(value) {
+    return (
+      {
+        standardStag: 'Standard Stag',
+        premiumPlatinum: 'Premium Platinum',
+        titaniumTable: 'Titanium Table',
+        titaniumTable10: 'Titanium Table 10',
+        premiumTitaniumTable: 'Premium Titanium Table'
+      }[String(value)] || value
+    )
+  }
 
   async function fetchBookings() {
     try {
@@ -62,11 +75,11 @@ function App() {
     try {
       const res = await fetch(`${apiBase}/api/bookings`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, numberOfTickets: parseInt(tickets), ticketType, phoneNumber: phone })
+        body: JSON.stringify({ name, numberOfTickets: parseInt(tickets), ticketType, extraPerson, phoneNumber: phone })
       })
       if (res.ok) {
-        const newBooking = await res.json(); setBookings([newBooking, ...bookings]);
-        setName(''); setTickets(1); setTicketType('Stag'); setPhone(''); showSnackbar('Ticket booked successfully!')
+          const newBooking = await res.json(); setBookings([newBooking, ...bookings]);
+          setName(''); setTickets(1); setTicketType('standardStag'); setExtraPerson(0); setPhone(''); showSnackbar('Ticket booked successfully!')
       } else { const errorText = await res.text(); showSnackbar(`Error: ${errorText}`, 'error') }
     } catch (err) { console.error(err); showSnackbar('Server not reachable', 'error') }
   }
@@ -101,7 +114,7 @@ function App() {
       let filename = `bookings_${new Date().toISOString().slice(0,19).replace(/[:T]/g,'')}.xlsx`
       if (disposition) {
         const fnMatch = disposition.match(/filename\*=UTF-8''([^;]+)/i) || disposition.match(/filename=\"?([^\";]+)\"?/i)
-        if (fnMatch && fnMatch[1]) { try { filename = decodeURIComponent(fnMatch[1]) } catch { filename = fnMatch[1].replace(/['"]/g,'') } }
+        if (fnMatch && fnMatch[1]) { try { filename = decodeURIComponent(fnMatch[1]) } catch { filename = fnMatch[1].replace(/['\"]/g,'') } }
       }
       const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = filename; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url); showSnackbar('Excel downloaded successfully!')
     } catch (err) { console.error(err); showSnackbar('Failed to download Excel', 'error') }
@@ -119,11 +132,22 @@ function App() {
           <TextField label="Name" variant="outlined" fullWidth value={name} onChange={(e)=>setName(e.target.value)} sx={{ mb: 2 }} />
           <TextField label="Phone Number" variant="outlined" fullWidth type="tel" value={phone} onChange={(e)=>setPhone(e.target.value)} sx={{ mb: 2 }} />
           <TextField label="Number of Tickets" variant="outlined" type="number" fullWidth inputProps={{ min: 1 }} value={tickets} onChange={(e)=>setTickets(e.target.value)} sx={{ mb: 2 }} />
-          <TextField select label="Ticket Type" fullWidth value={ticketType} onChange={(e)=>setTicketType(e.target.value)} sx={{ mb: 2 }}>
-            <MenuItem value="Stag">Stag</MenuItem>
-            <MenuItem value="Silver">Silver</MenuItem>
-            <MenuItem value="Gold">Gold</MenuItem>
-            <MenuItem value="Platinum">Platinum</MenuItem>
+                  <TextField select label="Ticket Type" fullWidth value={ticketType} onChange={(e) => setTicketType(e.target.value)} sx={{ mb: 2 }}>
+                      <TextField
+                          label="Extra Person"
+                          variant="outlined"
+                          type="number"
+                          fullWidth
+                          inputProps={{ min: 0 }}
+                          value={extraPerson}
+                          onChange={(e) => setExtraPerson(e.target.value)}
+                          sx={{ mb: 2 }}
+                      />
+            <MenuItem value="standardStag">Standard Stag</MenuItem>
+            <MenuItem value="premiumPlatinum">Premium Platinum</MenuItem>
+            <MenuItem value="titaniumTable">Titanium Table</MenuItem>
+            <MenuItem value="titaniumTable10">Titanium Table 10</MenuItem>
+            <MenuItem value="premiumTitaniumTable">Premium Titanium Table</MenuItem>
           </TextField>
           <Button variant="contained" color="primary" type="submit" fullWidth>Book Ticket</Button>
         </Box>
@@ -142,7 +166,7 @@ function App() {
             {bookings.map((b, idx) => (
               <React.Fragment key={b.id || idx}>
                 <ListItem secondaryAction={<IconButton edge="end" color="error" onClick={()=>openDeleteDialog(b.bookingNumber)}><DeleteIcon /></IconButton>}>
-                  <ListItemText primary={`${b.name} (${b.ticketType}) booked ${b.numberOfTickets} ticket(s)`} secondary={`Booking #: ${b.bookingNumber} | ${b.phoneNumber ? 'Phone: ' + b.phoneNumber + ' | ' : ''}${new Date(b.bookingDate).toLocaleString()}`} />
+                        <ListItemText primary={`${b.name} (${ticketTypeLabel(b.ticketType)}) booked ${b.numberOfTickets} ticket(s) ${b.extraPerson > 0 ? ` + ${b.extraPerson} extra` : ''}`} secondary={`Booking #: ${b.bookingNumber} | ${b.phoneNumber ? 'Phone: ' + b.phoneNumber + ' | ' : ''}${new Date(b.bookingDate).toLocaleString()}`} />
                 </ListItem>
                 <Divider />
               </React.Fragment>
