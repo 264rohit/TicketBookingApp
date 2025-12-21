@@ -8,11 +8,11 @@ RUN dotnet publish "TicketBookingApp/TicketBookingApp.csproj" -c Release -o /app
 
 # Build stage for React frontend
 FROM node:20 AS frontend-build
-WORKDIR /client
-COPY ["TicketBookingApp/client/package.json", "TicketBookingApp/client/package-lock.json", "./"]
-RUN npm ci --legacy-peer-deps
-COPY ["TicketBookingApp/client/", "."]
-RUN npm run build
+WORKDIR /src/TicketBookingApp/client
+COPY ["TicketBookingApp/client/package.json", "TicketBookingApp/client/yarn.lock", "./"]
+RUN yarn install --legacy-peer-deps
+COPY ["TicketBookingApp/", "../"]
+RUN yarn build
 
 # Final runtime stage
 FROM mcr.microsoft.com/dotnet/aspnet:8.0
@@ -20,7 +20,7 @@ WORKDIR /app
 COPY --from=dotnet-build /app/publish .
 
 # Copy built React frontend into wwwroot
-COPY --from=frontend-build /client/dist ./wwwroot
+COPY --from=frontend-build /src/TicketBookingApp/wwwroot ./wwwroot
 
 # Expose port (Render uses PORT env var)
 EXPOSE 5000
