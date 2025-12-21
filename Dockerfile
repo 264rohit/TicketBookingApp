@@ -7,7 +7,7 @@ COPY . .
 RUN dotnet publish "TicketBookingApp/TicketBookingApp.csproj" -c Release -o /app/publish
 
 # Build stage for React frontend
-FROM node:18 AS frontend-build
+FROM node:20 AS frontend-build
 WORKDIR /client
 COPY ["TicketBookingApp/client/package.json", "TicketBookingApp/client/yarn.lock", "./"]
 RUN yarn install --legacy-peer-deps
