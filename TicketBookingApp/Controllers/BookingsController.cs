@@ -4,6 +4,7 @@ using System.ComponentModel;
 using TicketBookingApp.Data;
 using TicketBookingApp.Dto;
 using TicketBookingApp.Models;
+using TicketBookingApp.Services;
 using ClosedXML.Excel;
 
 namespace TicketBookingApp.Controllers
@@ -19,9 +20,30 @@ namespace TicketBookingApp.Controllers
             _context = context;
         }
 
+        private string GetEmailFromToken()
+        {
+            var authHeader = Request.Headers.Authorization.FirstOrDefault();
+            if (string.IsNullOrEmpty(authHeader))
+                return null;
+
+            try
+            {
+                var token = authHeader.Replace("Bearer ", "");
+                var email = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(token));
+                return AuthorizationService.IsAuthorized(email) ? email : null;
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
+            if (string.IsNullOrEmpty(GetEmailFromToken()))
+                return Unauthorized(new { message = "Unauthorized" });
+
             var bookings = await _context.Bookings.OrderByDescending(b => b.BookingDate).ToListAsync();
             return Ok(bookings);
         }
@@ -29,6 +51,9 @@ namespace TicketBookingApp.Controllers
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(Guid id)
         {
+            if (string.IsNullOrEmpty(GetEmailFromToken()))
+                return Unauthorized(new { message = "Unauthorized" });
+
             var booking = await _context.Bookings.FindAsync(id);
             if (booking == null)
                 return NotFound();
@@ -38,6 +63,9 @@ namespace TicketBookingApp.Controllers
         [HttpGet("by-number/{bookingNumber}")]
         public async Task<IActionResult> GetByBookingNumber(string bookingNumber)
         {
+            if (string.IsNullOrEmpty(GetEmailFromToken()))
+                return Unauthorized(new { message = "Unauthorized" });
+
             var booking = await _context.Bookings
                 .FirstOrDefaultAsync(b => b.BookingNumber == bookingNumber);
 
@@ -50,6 +78,9 @@ namespace TicketBookingApp.Controllers
         [HttpGet("export/excel")]
         public async Task<IActionResult> ExportToExcel()
         {
+            if (string.IsNullOrEmpty(GetEmailFromToken()))
+                return Unauthorized(new { message = "Unauthorized" });
+
             var bookings = await _context.Bookings
                 .OrderByDescending(b => b.BookingDate)
                 .ToListAsync();
@@ -82,7 +113,7 @@ namespace TicketBookingApp.Controllers
 
             // Format
             worksheet.Columns().AdjustToContents();
-            worksheet.Column(6).Style.DateFormat.Format = "yyyy-mm-dd hh:mm:ss";
+            worksheet.Column(5).Style.DateFormat.Format = "yyyy-mm-dd hh:mm:ss";
 
             using var stream = new MemoryStream();
             workbook.SaveAs(stream);
@@ -118,6 +149,9 @@ namespace TicketBookingApp.Controllers
         [HttpPost]
         public async Task<ActionResult<Booking>> CreateBooking([FromBody] CreateBookingDto dto)
         {
+            if (string.IsNullOrEmpty(GetEmailFromToken()))
+                return Unauthorized(new { message = "Unauthorized" });
+
             if (dto == null)
                 return BadRequest(new { message = "Request body is required" });
 
@@ -176,6 +210,9 @@ namespace TicketBookingApp.Controllers
         [HttpDelete("by-number/{bookingNumber}")]
         public async Task<IActionResult> DeleteByBookingNumber(string bookingNumber)
         {
+            if (string.IsNullOrEmpty(GetEmailFromToken()))
+                return Unauthorized(new { message = "Unauthorized" });
+
             var booking = await _context.Bookings
                 .FirstOrDefaultAsync(b => b.BookingNumber == bookingNumber);
 
