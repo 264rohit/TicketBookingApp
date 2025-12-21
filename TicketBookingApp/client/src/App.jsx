@@ -30,7 +30,9 @@ import LogoutIcon from '@mui/icons-material/Logout'
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [loginEmail, setLoginEmail] = useState('')
+  const [loginPassword, setLoginPassword] = useState('')
   const [userEmail, setUserEmail] = useState(null)
+  const [loginErrorDialog, setLoginErrorDialog] = useState({ open: false, message: '' })
 
   const [name, setName] = useState('')
   const [tickets, setTickets] = useState(1)
@@ -73,8 +75,8 @@ function App() {
 
   async function handleLogin(e) {
     e.preventDefault()
-    if (!loginEmail) {
-      showSnackbar('Please enter your email', 'warning')
+    if (!loginEmail || !loginPassword) {
+      setLoginErrorDialog({ open: true, message: 'Please enter your email and password' })
       return
     }
 
@@ -82,7 +84,7 @@ function App() {
       const res = await fetch(`${apiBase}/api/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: loginEmail })
+        body: JSON.stringify({ email: loginEmail, password: loginPassword })
       })
 
       if (res.ok) {
@@ -91,15 +93,15 @@ function App() {
         setUserEmail(data.email)
         setIsLoggedIn(true)
         setLoginEmail('')
+        setLoginPassword('')
         showSnackbar(`Welcome, ${data.email}!`)
         fetchBookings(data.token)
       } else {
-        const error = await res.json()
-        showSnackbar(error.message || 'Login failed', 'error')
+        setLoginErrorDialog({ open: true, message: 'Invalid email or password' })
       }
     } catch (err) {
       console.error(err)
-      showSnackbar('Server not reachable', 'error')
+      setLoginErrorDialog({ open: true, message: 'Server not reachable' })
     }
   }
 
@@ -279,11 +281,11 @@ function App() {
       <Container maxWidth="sm" sx={{ mt: 10 }}>
         <Paper elevation={4} sx={{ p: 4, borderRadius: 3, textAlign: 'center' }}>
           <EventSeatIcon color="primary" fontSize="large" sx={{ mb: 2 }} />
-          <Typography variant="h4" fontWeight="bold" sx={{ mb: 3 }}>
-            Ticket Booking
+          <Typography variant="h4" fontWeight="bold" sx={{ mb: 1 }}>
+            4Pro Ticket Booking
           </Typography>
           <Typography variant="body2" color="textSecondary" sx={{ mb: 3 }}>
-            Login with your authorized email to access the app
+            Login with your 4Pro member email to book tickets
           </Typography>
 
           <Box component="form" onSubmit={handleLogin}>
@@ -295,17 +297,38 @@ function App() {
               value={loginEmail}
               onChange={(e) => setLoginEmail(e.target.value)}
               sx={{ mb: 2 }}
-              placeholder="imrohitchaudhari55@gmail.com"
+              placeholder="your@email.com"
+            />
+            <TextField
+              label="Password"
+              variant="outlined"
+              type="password"
+              fullWidth
+              value={loginPassword}
+              onChange={(e) => setLoginPassword(e.target.value)}
+              sx={{ mb: 2 }}
             />
             <Button variant="contained" color="primary" type="submit" fullWidth>
               Login
             </Button>
           </Box>
 
-          <Typography variant="caption" color="textSecondary" sx={{ mt: 2, display: 'block' }}>
-            Authorized emails: imrohitchaudhari55@gmail.com, rakhpasaremangesh33@gmail.com
+          <Typography variant="caption" color="textSecondary" sx={{ display: 'block', mt: 3 }}>
+            If you are not a 4Pro member, please contact the admin for access.
           </Typography>
         </Paper>
+
+        <Dialog open={loginErrorDialog.open} onClose={() => setLoginErrorDialog({ open: false, message: '' })}>
+          <DialogTitle sx={{ color: 'error.main', fontWeight: 'bold' }}>Login Failed</DialogTitle>
+          <DialogContent>
+            <DialogContentText>{loginErrorDialog.message}</DialogContentText>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setLoginErrorDialog({ open: false, message: '' })} color="primary" autoFocus>
+              Try Again
+            </Button>
+          </DialogActions>
+        </Dialog>
       </Container>
     )
   }

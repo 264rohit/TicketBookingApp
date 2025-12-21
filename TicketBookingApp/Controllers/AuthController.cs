@@ -16,9 +16,6 @@ namespace TicketBookingApp.Controllers
             if (string.IsNullOrEmpty(email))
                 return Unauthorized(new { message = "Not authenticated" });
 
-            if (!Services.AuthorizationService.IsAuthorized(email))
-                return Forbid("Your email is not authorized to access this app");
-
             return Ok(new { email, name });
         }
 
@@ -28,8 +25,11 @@ namespace TicketBookingApp.Controllers
             if (string.IsNullOrEmpty(request?.Email))
                 return BadRequest(new { message = "Email is required" });
 
-            if (!Services.AuthorizationService.IsAuthorized(request.Email))
-                return Unauthorized(new { message = "Email not authorized to access this app" });
+            if (string.IsNullOrEmpty(request?.Password))
+                return BadRequest(new { message = "Password is required" });
+
+            if (!Services.AuthorizationService.IsAuthorized(request.Email, request.Password))
+                return Unauthorized(new { message = "Invalid email or password" });
 
             // Return a simple token (in production, use JWT)
             var token = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(request.Email));
@@ -47,9 +47,6 @@ namespace TicketBookingApp.Controllers
             {
                 var token = authHeader.Replace("Bearer ", "");
                 var email = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(token));
-
-                if (!Services.AuthorizationService.IsAuthorized(email))
-                    return Unauthorized(new { message = "Token invalid or email not authorized" });
 
                 return Ok(new { email });
             }
@@ -70,5 +67,6 @@ namespace TicketBookingApp.Controllers
     public class LoginRequest
     {
         public string Email { get; set; }
+        public string Password { get; set; }
     }
 }

@@ -30,7 +30,8 @@ namespace TicketBookingApp.Controllers
             {
                 var token = authHeader.Replace("Bearer ", "");
                 var email = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(token));
-                return AuthorizationService.IsAuthorized(email) ? email : null;
+                // Just return the email if it can be decoded, authorization is checked in Login
+                return !string.IsNullOrEmpty(email) ? email : null;
             }
             catch
             {

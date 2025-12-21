@@ -4,25 +4,32 @@ namespace TicketBookingApp.Services
 {
     public class AuthorizationService
     {
-        // Whitelist of authorized email addresses
-        private static readonly HashSet<string> AuthorizedEmails = new HashSet<string>
+        // Whitelist of authorized users with email and password
+        private static readonly Dictionary<string, string> AuthorizedUsers = new Dictionary<string, string>
         {
-            "imrohitchaudhari55@gmail.com",
-            "rakhpasaremangesh33@gmail.com"
+            { "imrohitchaudhari55@gmail.com", "4Pro@2024Secure" },
+            { "rakhpasaremangesh33@gmail.com", "4Pro@2024Secure" }
         };
 
-        public static bool IsAuthorized(string email)
+        public static bool IsAuthorized(string email, string password)
         {
-            return !string.IsNullOrEmpty(email) && AuthorizedEmails.Contains(email.ToLower());
+            if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(password))
+                return false;
+
+            if (AuthorizedUsers.TryGetValue(email.ToLower(), out var storedPassword))
+            {
+                return password == storedPassword;
+            }
+
+            return false;
         }
 
-        public static void UpdateAuthorizedEmails(params string[] emails)
+        public static void UpdateAuthorizedUsers(Dictionary<string, string> users)
         {
-            AuthorizedEmails.Clear();
-            foreach (var email in emails)
+            AuthorizedUsers.Clear();
+            foreach (var user in users)
             {
-                if (!string.IsNullOrEmpty(email))
-                    AuthorizedEmails.Add(email.ToLower());
+                AuthorizedUsers[user.Key.ToLower()] = user.Value;
             }
         }
     }
