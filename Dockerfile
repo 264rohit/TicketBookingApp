@@ -17,6 +17,10 @@ RUN npm run build
 # Final runtime stage
 FROM mcr.microsoft.com/dotnet/aspnet:8.0
 WORKDIR /app
+
+# Disable file watching to prevent inotify issues in container environments
+ENV DOTNET_USE_POLLING_FILE_WATCHER=true
+
 COPY --from=dotnet-build /app/publish .
 
 # Copy built React frontend into wwwroot
